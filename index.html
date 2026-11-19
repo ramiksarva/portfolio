@@ -78,6 +78,8 @@ h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:.92;
 /* Floating message + toast */
 #floatMsg{position:absolute;z-index:26;left:50%;top:19%;transform:translateX(-50%);background:#fff;color:#111;border-radius:14px;padding:11px 16px;font-size:15px;font-weight:800;box-shadow:0 14px 36px rgba(0,0,0,.4);max-width:min(440px,86vw);text-align:center;pointer-events:none}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:80;background:#fff;color:#111;padding:12px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 36px rgba(0,0,0,.45);font-size:14.5px;max-width:90vw;text-align:center}
+#campToast{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:24;background:#fffaf0;color:#1d1b18;border:1px solid rgba(90,60,30,.25);border-radius:999px;padding:9px 16px;font-weight:800;font-size:13px;white-space:nowrap;max-width:92vw;box-shadow:0 10px 26px rgba(90,50,10,.28);animation:campToastIn .3s ease}
+@keyframes campToastIn{from{transform:translate(-50%,-8px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 .fakeCursor{position:absolute;pointer-events:none;z-index:12;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;color:#111;white-space:nowrap;transition:left 3s linear,top 3s linear}
 /* ===== START OVERLAY ===== */
 #startOverlay{position:absolute;inset:0;z-index:40;background:linear-gradient(180deg,rgba(15,14,12,.25),rgba(15,14,12,.78) 78%);display:flex;align-items:flex-end;justify-content:center;padding:22px}
@@ -146,8 +148,16 @@ body.entered #game{animation:gameIn .9s ease}
 @keyframes gameIn{from{transform:scale(1.035);filter:brightness(.55)}to{transform:none;filter:none}}
 body:not(.playing) #hud,body:not(.playing) #controlsBar{display:none!important}
 #pop.hide{display:none!important}
+/* Portfolio buttons unlock with the FIRST camp: until body.show-stuff is added
+   (first camp unlocked) both stay hidden; once added it is never removed, so from
+   that moment on they stay visible for good — through drawer open/close, falls,
+   respawns and all the way to the summit. Before play the HUD itself is hidden
+   (body:not(.playing) #hud), and the bottom button sits in its own reserved row
+   above the Dyno/Chalk bar (see its rules below), never overlapping either. */
 body:not(.show-stuff) #openDrawerBtn{display:none!important}
 #openDrawerBtn{background:var(--amber);color:#111;border-color:transparent}
+body:not(.show-stuff) #showStuffBtn{display:none!important}
+body.show-stuff #showStuffBtn{display:block!important}
 #controlsBar{padding:6px;gap:6px}
 #controlsBar button{min-height:46px;padding:11px 18px}
 #hud{padding:10px 12px}
@@ -226,8 +236,10 @@ body:not(.show-stuff) #openDrawerBtn{display:none!important}
 #guideClose{display:none}
 /* ===== MOBILE ONLY — desktop layout above is untouched ===== */
 @media(max-width:760px){
-  /* Wall / canvas ends above the Dyno/Chalk dock, so holds, ground and climber are never behind it */
-  #c{top:0;bottom:auto;height:calc(100% - 60px)}
+  /* Wall / canvas ends above BOTH bottom rows — the View portfolio row and the Dyno/Chalk dock —
+     so holds, ground and climber are never behind either, and the reserved band below the canvas
+     leaves clear room under the climber */
+  #c{top:0;bottom:auto;height:calc(100% - 118px - env(safe-area-inset-bottom))}
   /* HUD — one compact row: Alt (metres only, set in JS), Energy, day phase. Time + Falls hidden */
   #hud{flex-wrap:nowrap;padding:8px;gap:6px}
   #hud .hudGroup{flex-wrap:nowrap;gap:5px;min-width:0}
@@ -240,8 +252,9 @@ body:not(.show-stuff) #openDrawerBtn{display:none!important}
   /* Dyno / Chalk — slim docked bar BELOW the wall, never overlapping it */
   #controlsBar{left:0;right:0;bottom:0;transform:none;width:100%;max-width:100vw;flex-wrap:nowrap;justify-content:stretch;border-radius:18px 18px 0 0;border-left:0;border-right:0;border-bottom:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:6px}
   #controlsBar button{flex:1 1 0;min-height:44px;padding:10px 8px;font-size:13.5px}
-  /* View portfolio — small pill tucked just above the dock, bottom-right */
-  #showStuffBtn{right:10px;bottom:72px;padding:9px 13px;font-size:12.5px;min-height:38px;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+  /* View portfolio — its OWN row in the reserved band above the Dyno/Chalk dock (dock top edge is
+     56px + safe-area), bottom-right, so it can never overlap Dyno or Chalk */
+  #showStuffBtn{right:10px;bottom:calc(66px + env(safe-area-inset-bottom));padding:9px 13px;font-size:12.5px;min-height:38px;box-shadow:0 8px 20px rgba(0,0,0,.3)}
   /* Camp card — small tab sliding in from the LEFT edge (like desktop's bottom-left card),
      narrow and short so the climber and holds stay visible; clear round X */
   #pop{left:0;top:50%;bottom:auto;transform:translateY(-50%);width:min(224px,56vw);max-height:32dvh;overflow-y:auto;padding:10px 32px 10px 12px;border-radius:0 14px 14px 0;border-left-width:5px}
@@ -252,11 +265,18 @@ body:not(.show-stuff) #openDrawerBtn{display:none!important}
   #popMore{margin-top:7px;padding:7px 12px;font-size:12px;min-height:34px}
   #popClose{top:5px;right:5px;width:28px;height:28px;min-width:28px;min-height:28px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid rgba(90,60,30,.3);border-radius:999px;font-size:16px;line-height:1;color:#2b1d12;box-shadow:0 2px 8px rgba(90,50,10,.18)}
   /* Welcome guide — small card top-right under the HUD, with a clear X */
-  #keysHint{top:56px;bottom:auto;right:8px;left:auto;max-width:min(188px,48vw);font-size:11px;line-height:1.5;padding:8px 30px 8px 10px;border-radius:12px;z-index:23}
+  /* Guide card removed entirely on mobile — the slingshot is taught in-game on the canvas instead */
+  #keysHint{display:none!important}
+  /* Camp toast pill — small, top-centre under the HUD, never over the wall or climber.
+     SLOT 1 of the stacked toasts: the float message sits in slot 2 below (see #floatMsg),
+     so the camp toast and the chalk/float message never overlap */
+  #campToast{top:54px}
   #guideClose{display:flex;align-items:center;justify-content:center;position:absolute;top:5px;right:5px;width:24px;height:24px;min-width:24px;min-height:24px;padding:0;background:#fff;border:1px solid rgba(90,60,30,.3);border-radius:999px;font-size:14px;line-height:1;color:#2b1d12;box-shadow:0 2px 8px rgba(90,50,10,.18)}
   /* Pop-ups — compact, never covering the whole view */
-  #floatMsg{top:52px;font-size:13px;padding:8px 12px;max-width:80vw;border-radius:12px}
-  #toast{bottom:124px;font-size:13px;padding:9px 14px;max-width:86vw}
+  /* Float message (e.g. "Pumped out, chalk up (C)!") — SLOT 2, stacked 50px below the camp
+     toast's slot 1 (54px + ~36px pill + clear gap), so the two headers never stack on each other */
+  #floatMsg{top:104px;font-size:13px;padding:8px 12px;max-width:80vw;border-radius:12px}
+  #toast{bottom:calc(130px + env(safe-area-inset-bottom));font-size:13px;padding:9px 14px;max-width:86vw}
   #summitOverlay{padding:12px}
   #summitOverlay .sumCard{padding:20px 16px;max-height:82dvh;overflow-y:auto;border-radius:18px}
   #cardModal{padding:10px}
@@ -358,8 +378,10 @@ body:not(.show-stuff) #openDrawerBtn{display:none!important}
 
   <div id="floatMsg" hidden></div>
 
-  <!-- STAGE 3 — SHOW (appears after you've played a bit) -->
-  <button id="showStuffBtn" hidden>View portfolio →</button>
+  <button id="campToast" type="button" hidden></button>
+
+  <!-- Portfolio — unlocks with the first camp, then stays visible for good, in its own reserved row above the Dyno/Chalk bar -->
+  <button id="showStuffBtn">View portfolio →</button>
 
   <!-- START -->
   <div id="startOverlay">
@@ -465,6 +487,22 @@ buildHolds();
 var B={x:450,y:2946,vx:0,vy:0};
 var Hd=[{x:0,y:0,g:null,f:null,sd:-1},{x:0,y:0,g:null,f:null,sd:1}];
 var P={x:450,y:2900},keys={},stam=100,ch=6,fl=0,t0=0,tEnd=0,done=false,rest=null,cam=2360,spin=0,tt=0,started=false,shakeT=0;
+var camX=0;
+/* Mobile slingshot hint state: shows at the start, fades after the first dyno or a few moves, reappears briefly after a fall */
+var hintMoves=0,hintDyno=false,hintUntil=0;
+function isMobile(){return !!(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)}
+function hintOn(){if(!isMobile())return false;if(performance.now()<hintUntil)return true;return !(hintDyno||hintMoves>=3)}
+/* ===== READING PAUSE + CAMP CHECKPOINT (mobile + desktop) =====
+   Energy must not drain while the viewer is reading: drawer open, a story pop-up open,
+   the summit overlay open, or the run-card modal open. When reading ends, a 4s grace
+   period runs with no drain and no "Pumped out" warning, giving time to chalk up. */
+var checkpointIdx=0,checkpointHold=holds[0]||null,wasReading=false,resumeGraceUntil=0;
+function highestGotIdx(){for(var hi=ST.length-1;hi>=0;hi--)if(got[hi])return hi;return 0}
+function campHoldForIdx(idx){for(var hi2=0;hi2<holds.length;hi2++)if(holds[hi2].s===idx)return holds[hi2];return holds[0]||null}
+function syncCheckpoint(){var idx=highestGotIdx();checkpointIdx=idx;checkpointHold=campHoldForIdx(idx);if(checkpointHold)rest=checkpointHold;return checkpointHold}
+function noteCheckpoint(idx,hold){if(typeof idx==='number'&&idx>checkpointIdx){checkpointIdx=idx;checkpointHold=hold||campHoldForIdx(idx);if(checkpointHold)rest=checkpointHold}else if(hold&&idx===checkpointIdx){checkpointHold=hold;rest=hold}}
+function isReadingPaused(){try{var dr=$('drawer');if(dr&&dr.classList.contains('open'))return true;var so=$('summitOverlay');if(so&&!so.hidden)return true;var cm=$('cardModal');if(cm&&!cm.hidden)return true;var pp=$('pop');if(pp&&!pp.classList.contains('hide'))return true;var ct=$('campToast');if(ct&&!ct.hidden&&isMobile())return true} catch(e){}return false}
+function energyPaused(){var now=performance.now();if(isReadingPaused()){wasReading=true;try{pumpedT=0}catch(e){}return true}if(wasReading){wasReading=false;resumeGraceUntil=now+4000;try{pumpedT=0}catch(e){}}if(now<resumeGraceUntil){try{pumpedT=0}catch(e){}return true}return false}
 var particles=[],ghostRec=[],ghostPlay=[],recTimer=0,playMs=0;
 if(bestMs){var btEl=$('bestTime');if(btEl)btEl.textContent=fmtT(bestMs)}
 function persist(){try{lsSet('wall_chalk',chalkMarks)}catch(e){}/* Session-only unlocks: progress is never restored on load, so any fresh copy of this file starts fully locked. Chapters unlock by climbing past them, or by tapping an Unlock button. */}
@@ -473,21 +511,24 @@ function nextIdx(){for(var i=0;i<ST.length;i++)if(!got[i])return i;return ST.len
 var CAMP_ALT=[5364,5900,6400,7164,7950,8000,8848];
 var CAMP_ZONE=['Base Camp','Khumbu Icefall','Western Cwm','Lhotse Face','South Col','Death Zone','Summit'];
 function altAt(y){return Math.round(5364+(2900-y)*(3484/2800))}
-function showPop(i){popIdx=i;$('popGrade').textContent='CAMP '+(i+1)+'/'+ST.length+' \u00B7 '+GRADES[i]+' \u00B7 '+ST[i][0];$('popGrade').style.display='block';$('popTitle').textContent=ST[i][0];$('popBody').textContent=(typeof POP!=='undefined'&&POP[i])?POP[i]:ST[i][1];$('pop').classList.remove('hide');clearTimeout($('pop')._x);$('pop')._x=setTimeout(function(){$('pop').classList.add('hide')},9000)}
+var campToastIdx=0;
+function showCampToast(i){campToastIdx=i;var ct=$('campToast');if(!ct)return;ct.textContent='Camp '+(i+1)+' unlocked \u2014 '+CAMP_ZONE[i];ct.hidden=false;clearTimeout(ct._x);ct._x=setTimeout(function(){ct.hidden=true},3000)}
+function showPop(i){popIdx=i;if(isMobile()){$('pop').classList.add('hide');showCampToast(i);return}$('popGrade').textContent='CAMP '+(i+1)+'/'+ST.length+' \u00B7 '+GRADES[i]+' \u00B7 '+ST[i][0];$('popGrade').style.display='block';$('popTitle').textContent=ST[i][0];$('popBody').textContent=(typeof POP!=='undefined'&&POP[i])?POP[i]:ST[i][1];$('pop').classList.remove('hide');clearTimeout($('pop')._x);$('pop')._x=setTimeout(function(){$('pop').classList.add('hide')},9000)}
 var popIdx=0;
 $('popMore').onclick=function(){if(typeof openDrawer==='function')openDrawer('story')};
 $('popClose').onclick=function(){$('pop').classList.add('hide')};
+$('campToast').onclick=function(){var ct=$('campToast');ct.hidden=true;clearTimeout(ct._x);if(typeof openDrawer==='function')openDrawer('story')};
 $('guideClose').onclick=function(){guideDismissed=true;hideGuide()};
 function burst(x,y,n,col){for(var i=0;i<n;i++)particles.push({x:x,y:y,vx:(Math.random()-.5)*160,vy:-Math.random()*160-30,life:.7+Math.random()*.5,t:0,col:col||'#fff'})}
 var guideForce=false;
 var guideDismissed=false;
 function hideGuide(){var g=$('keysHint');if(g)g.style.display='none'}
 function showGuide(){var g=$('keysHint');if(g&&!guideDismissed&&document.body.classList.contains('playing'))g.style.display='block'}
-function grip(h,o){h.g=o;h.f=null;h.x=o.x+h.sd*7;h.y=o.y;chalkMarks[o.id]=(chalkMarks[o.id]||0)+1;if(o.s>=0){rest=o;if(o.s>=1){guideForce=false;hideGuide()}if(!got[o.s]){got[o.s]=1;burst(o.x,o.y,16,'#2dd4bf');showPop(o.s);renderProgress();renderDrawer();persist();if(o.s===ST.length-1)summit()}else if(Math.random()<.4)showPop(o.s)}}
-rest=holds[0];Hd.forEach(function(h){grip(h,holds[0])});got=ST.map(function(){return 0});
+function grip(h,o){h.g=o;h.f=null;h.x=o.x+h.sd*7;h.y=o.y;if(started)hintMoves++;chalkMarks[o.id]=(chalkMarks[o.id]||0)+1;if(o.s>=0){noteCheckpoint(o.s,o);if(o.s>=1){guideForce=false;hideGuide()}if(!got[o.s]){got[o.s]=1;noteCheckpoint(o.s,o);burst(o.x,o.y,16,'#2dd4bf');showPop(o.s);renderProgress();renderDrawer();persist();if(o.s===ST.length-1)summit()}else if(Math.random()<.4)showPop(o.s)}}
+rest=holds[0];checkpointIdx=0;checkpointHold=holds[0];Hd.forEach(function(h){grip(h,holds[0])});got=ST.map(function(){return 0});checkpointIdx=0;checkpointHold=holds[0];rest=holds[0];
 function endF(h){h.f=null;var b=null,bd=64;for(var i=0;i<holds.length;i++){var o=holds[i],d=Math.hypot(o.x-h.x,o.y-h.y);if(d<bd){bd=d;b=o}}if(b)grip(h,b)}
-function view(){var r=cv.getBoundingClientRect();return{w:r.width,h:r.height,sx:r.width/WORLDW}}
-function wp(e){var r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*WORLDW,y:(e.clientY-r.top)/r.width*WORLDW+cam}}
+function view(){var r=cv.getBoundingClientRect();var z=isMobile()?1.7:1;return{w:r.width,h:r.height,sx:r.width/WORLDW*z}}
+function wp(e){var r=cv.getBoundingClientRect();var v=view();return{x:(e.clientX-r.left)/v.sx+camX,y:(e.clientY-r.top)/v.sx+cam}}
 function begin(){if(!t0)t0=performance.now();started=true}
 var sling=null;
 cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);var p=wp(e);P.x=p.x;P.y=p.y;
@@ -503,7 +544,7 @@ function doChalk(){pumpedT=0;if(stam<100){stam=100;burst(B.x,B.y-20,12,'#ffffff'
 /* ===== DYNO — leap for the next hold ===== */
 var dynoT=0,dynoCD=0,pumpedT=0;
 function dynoTargetHold(){var ni=nextIdx(),nh=null;for(var i=0;i<holds.length;i++)if(holds[i].s===ni)nh=holds[i];if(nh&&nh.y<B.y-10)return nh;var b=null,bd=1e9;for(var j=0;j<holds.length;j++){var o=holds[j];if(o.y<B.y-30&&o.y>B.y-320){var d=Math.hypot(o.x-B.x,o.y-B.y);if(d<bd){bd=d;b=o}}}return b}
-function doDyno(){if(done||dynoT>0||dynoCD>0)return;var t=dynoTargetHold();if(!t){toast('Climb a little first.');return}if(stam<15){toast('Chalk up first.');showFloat('Chalk up first.');return}begin();stam=0;pumpedT=0;dynoCD=1.1;dynoT=.62;Hd.forEach(function(h){h.g=null;h.f='dyno';h.tgt=null});B.vx=cl((t.x-B.x)*2.4,-520,520);B.vy=-1010;burst(B.x,B.y+10,14,'#f7b267');showFloat('Dyno!')}
+function doDyno(){if(done||dynoT>0||dynoCD>0)return;var t=dynoTargetHold();if(!t){toast('Climb a little first.');return}if(stam<15){toast('Chalk up first.');showFloat('Chalk up first.');return}begin();hintDyno=true;stam=0;pumpedT=0;dynoCD=1.1;dynoT=.62;Hd.forEach(function(h){h.g=null;h.f='dyno';h.tgt=null});B.vx=cl((t.x-B.x)*2.4,-520,520);B.vy=-1010;burst(B.x,B.y+10,14,'#f7b267');showFloat('Dyno!')}
 var cheat='';
 function grabAbove(h,dir){ /* A/D FIX: instantly place the hand on the best hold STRICTLY ABOVE it.
    World Y grows downward, so "above" is always a SMALLER y. We search relative to the BODY too,
@@ -519,19 +560,20 @@ addEventListener('keyup',function(e){var k=e.key.toLowerCase();if(k==='a'||k==='
 $('chalkBtn').onclick=doChalk;
 $('dynoBtn').onclick=function(){doDyno()};
 cv.addEventListener('dblclick',function(){doDyno()});
-function respawn(silent){if(!rest)rest=holds[0];var wf=guideForce;B.x=rest.x;B.y=rest.y+52;B.vx=B.vy=0;stam=100;Hd.forEach(function(h){grip(h,rest)});guideForce=wf;if(wf)showGuide();if(!silent)toast('Back to last camp.')}
+function respawn(silent){var cp=syncCheckpoint();if(!cp)cp=holds[0];var wf=guideForce;B.x=cp.x;B.y=cp.y+52;B.vx=B.vy=0;stam=100;pumpedT=0;Hd.forEach(function(h){grip(h,cp)});guideForce=wf;if(wf)showGuide();if(!silent)toast('Back to last camp.')}
 $('respawnBtn').onclick=function(){respawn()};
-$('resetBtn').onclick=function(){fl=0;t0=0;done=false;playMs=0;got=ST.map(function(){return 0});chalkMarks={};buildHolds();rest=holds[0];got[0]=1;B.x=450;B.y=2946;B.vx=B.vy=0;stam=100;ch=6;Hd.forEach(function(h){grip(h,rest)});got=ST.map(function(){return 0});renderProgress();renderDrawer();persist();$('summitOverlay').hidden=true;toast('Fresh run.')};
+$('resetBtn').onclick=function(){fl=0;t0=0;done=false;playMs=0;got=ST.map(function(){return 0});chalkMarks={};buildHolds();checkpointIdx=0;checkpointHold=holds[0];rest=holds[0];resumeGraceUntil=0;wasReading=false;got[0]=1;B.x=450;B.y=2946;B.vx=B.vy=0;stam=100;ch=6;Hd.forEach(function(h){grip(h,rest)});got=ST.map(function(){return 0});checkpointIdx=0;checkpointHold=holds[0];rest=holds[0];renderProgress();renderDrawer();persist();$('summitOverlay').hidden=true;toast('Fresh run.')};
 document.querySelectorAll('#routes button').forEach(function(b){b.onclick=function(){document.querySelectorAll('#routes button').forEach(function(x){x.classList.remove('active')});b.classList.add('active');routeMode=b.dataset.route;toast('Route: '+ROUTES[routeMode].label)}});
 function showFloat(m){var f=$('floatMsg');f.textContent=m;f.hidden=false;clearTimeout(f._t);f._t=setTimeout(function(){f.hidden=true},4200)}
-function onFall(){fl++;localSends++;guideForce=true;shakeT=.4;$('game').classList.remove('shake');void $('game').offsetWidth;$('game').classList.add('shake');burst(B.x,B.y,18,'#fbbf24');showFloat(FALL_MSGS[Math.floor(Math.random()*FALL_MSGS.length)]);respawn(true);showGuide();persist()}
+function onFall(){fl++;localSends++;hintUntil=performance.now()+4000;guideForce=true;shakeT=.4;$('game').classList.remove('shake');void $('game').offsetWidth;$('game').classList.add('shake');burst(B.x,B.y,18,'#fbbf24');showFloat(FALL_MSGS[Math.floor(Math.random()*FALL_MSGS.length)]);respawn(true);showGuide();persist()}
 function upd(dt){
+ var ePausedNow=energyPaused();
  if(started&&!done)playMs+=dt*1000;
  if(dynoCD>0)dynoCD-=dt;
  /* DYNO STEERING — while airborne, A/D / arrows / mouse bend the flight left or right */
  if(dynoT>0){var stx=0;if(keys.left)stx-=1;if(keys.right)stx+=1;if(stx)B.vx=cl(B.vx+stx*1500*dt,-640,640);else if(!sling)B.vx=cl(B.vx+(P.x-B.x)*2.6*dt,-640,640)}
  /* CAMPS UNLOCK BY ALTITUDE — fly or climb PAST a camp and its story is yours, no touch needed */
- for(var ci=0;ci<ST.length;ci++){if(got[ci])continue;var chold=null;for(var cj=0;cj<holds.length;cj++)if(holds[cj].s===ci){chold=holds[cj];break}if(chold&&B.y<chold.y+26){got[ci]=1;if(ci>=1&&!guideForce)hideGuide();burst(chold.x,chold.y,16,'#2dd4bf');showPop(ci);renderProgress();renderDrawer();persist();if(ci===ST.length-1)summit()}}
+ for(var ci=0;ci<ST.length;ci++){if(got[ci])continue;var chold=null;for(var cj=0;cj<holds.length;cj++)if(holds[cj].s===ci){chold=holds[cj];break}if(chold&&B.y<chold.y+26){got[ci]=1;noteCheckpoint(ci,chold);if(ci>=1&&!guideForce)hideGuide();burst(chold.x,chold.y,16,'#2dd4bf');showPop(ci);renderProgress();renderDrawer();persist();if(ci===ST.length-1)summit()}}
  if(dynoT>0){dynoT-=dt;if(dynoT<=0){Hd.forEach(function(h){if(h.f==='dyno'){h.f=null;var b=null,bd=95;for(var oi2=0;oi2<holds.length;oi2++){var oo=holds[oi2],dd=Math.hypot(oo.x-h.x,oo.y-h.y);if(dd<bd){bd=dd;b=oo}}if(b){grip(h,b);showFloat('Stuck it.')}}})}}
  for(var i=0;i<Hd.length;i++){var h=Hd[i];if(h.f==='dyno'){var kd=Math.min(1,dt*16);h.x+=(B.x+h.sd*22-h.x)*kd;h.y+=(B.y-26-h.y)*kd}else if(h.f==='a'||h.f==='d'){var kk=Math.min(1,dt*18);if(h.tgt){h.x+=(h.tgt.x-h.x)*kk;h.y+=(h.tgt.y-h.y)*kk}}else if(h.f){var dx=P.x-B.x,dy=P.y-B.y,d=Math.hypot(dx,dy);if(d>ARM){dx*=ARM/d;dy*=ARM/d}var k=Math.min(1,dt*22);h.x+=(B.x+dx-h.x)*k;h.y+=(B.y+dy-h.y)*k}else if(!h.g){var k2=Math.min(1,dt*9);h.x+=(B.x+h.sd*24-h.x)*k2;h.y+=(B.y-14-h.y)*k2}}
  /* Slingshot aiming does NOT drag the body — the body only moves on release, via doDyno(). */
@@ -542,15 +584,16 @@ function upd(dt){
  B.x=cl(B.x+B.vx*dt,14,WORLDW-14);B.y+=B.vy*dt;
  /* ENERGY — standing on a hold drains slowly, attempting a move drains fast, chalk refills. Dynos empty the tank (see doDyno). */
  var d=0;if(gr.length){var moving=Hd.some(function(h){return !!h.f});d=(moving?11:2.6)*ROUTES[routeMode].drain;if(gr.some(function(h){return h.g.s>=0}))d*=.55}
- if(!done)stam=cl(stam-d*dt,0,100);
+ if(!done&&!ePausedNow)stam=cl(stam-d*dt,0,100);
  /* CHALK FIX — energy never refills on its own (the old hidden top-up is gone). At 0 the
     hands hold on for a short grace (3s — time to hit Chalk) and then let go. Energy only
     comes back by chalking (C / Chalk button), respawning after a fall, or Reset. */
- if(stam<=0&&gr.length){var wasPumped=pumpedT>0;pumpedT+=dt;if(!wasPumped)showFloat('Pumped out, chalk up (C)!');if(pumpedT>3){pumpedT=0;Hd.forEach(function(h){h.g=null;h.f=null});showFloat('Pumped out.')}}else pumpedT=0;
+ if(!ePausedNow&&stam<=0&&gr.length){var wasPumped=pumpedT>0;pumpedT+=dt;if(!wasPumped)showFloat('Pumped out, chalk up (C)!');if(pumpedT>3){pumpedT=0;Hd.forEach(function(h){h.g=null;h.f=null});showFloat('Pumped out.')}}else pumpedT=0;
  if(!gr.length&&rest&&B.y>rest.y+340)onFall();
  spin=gr.length?spin*.8:spin+dt*6;tt+=dt;
  if(t0&&!done){recTimer+=dt;if(recTimer>.12){recTimer=0;ghostRec.push({t:performance.now()-t0,x:B.x,y:B.y})}}
- var vh=view().h/view().sx;cam+=(B.y-vh*.62-cam)*Math.min(1,dt*4);cam=cl(cam,0,GR-vh+80);
+ var vh=view().h/view().sx;var camAnchor=isMobile()?.725:.62;cam+=(B.y-vh*camAnchor-cam)*Math.min(1,dt*4);cam=cl(cam,0,GR-vh+(isMobile()?150:80));
+ var vw2=view().w/view().sx;camX=cl(B.x-vw2/2,0,Math.max(0,WORLDW-vw2));
  particles=particles.filter(function(p){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;return p.t<p.life});
  if(shakeT>0)shakeT-=dt;
 }
@@ -589,18 +632,20 @@ function draw(){
  var rw=ctx.createLinearGradient(0,vh*.35,0,vh);rw.addColorStop(0,'rgba(160,105,60,0)');rw.addColorStop(1,'rgba(160,105,60,.20)');ctx.fillStyle=rw;ctx.fillRect(0,0,WORLDW,vh);
  /* snow line — the higher you climb, the whiter the world gets */
  if(cam<1500){ctx.fillStyle='rgba(255,255,255,'+((1500-cam)/1500*.22)+')';ctx.fillRect(0,0,WORLDW,vh)}
- ctx.save();ctx.translate(0,-cam);
+ ctx.save();ctx.translate(-camX,-cam);
  /* rock texture bands */
  ctx.strokeStyle=DAY.ink+'.14)';ctx.lineWidth=1;for(var y=Math.floor(cam/70)*70;y<cam+vh+70;y+=70){ctx.beginPath();ctx.moveTo(0,y+34);for(var x=0;x<=WORLDW;x+=90)ctx.lineTo(x,y+34+Math.sin((x+y)*.02)*7);ctx.stroke()}
  /* No names or altitude text drawn on the wall itself — altitude + "past …" lives only in the top HUD pill. */
  if(cam+vh>GR-60){ctx.fillStyle=DAY.ink+'.10)';ctx.fillRect(0,GR-50,WORLDW,220)}
  /* summit highlight band (no text) */
  ctx.fillStyle='rgba(251,191,36,.14)';ctx.fillRect(0,holds[40].y-70,WORLDW,54);
- /* next-hold guide — dashed line only, no label */
+ /* next-hold guide — desktop: dashed line only, no label. Mobile: a whisper of chalk dots
+    in warm cream instead of the yellow dash, so the wall stays calm and on-brand */
  var ni=nextIdx(),nh=null;for(var i=0;i<holds.length;i++)if(holds[i].s===ni)nh=holds[i];
- if(nh&&!done){ctx.save();ctx.strokeStyle='rgba(251,191,36,.65)';ctx.lineWidth=2.5;ctx.setLineDash([8,8]);ctx.beginPath();ctx.moveTo(B.x,B.y-24);ctx.lineTo(nh.x,nh.y);ctx.stroke();ctx.setLineDash([]);ctx.restore()}
- /* slingshot aim line while pulling back — release triggers the same doDyno() as Space / Dyno button */
- if(sling){ctx.save();ctx.strokeStyle='#e85d1f';ctx.lineWidth=3;ctx.setLineDash([6,6]);ctx.beginPath();ctx.moveTo(B.x,B.y);ctx.lineTo(sling.x,sling.y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#e85d1f';ctx.beginPath();ctx.arc(sling.x,sling.y,6,0,7);ctx.fill();ctx.restore()}
+ if(nh&&!done){if(isMobile()){ctx.save();var gd=Math.hypot(nh.x-B.x,nh.y-(B.y-24)),gn=Math.max(2,Math.floor(gd/17));ctx.fillStyle='rgba(255,248,236,.85)';for(var gi=1;gi<gn;gi++){var gf=gi/gn;ctx.globalAlpha=.10+.16*gf;ctx.beginPath();ctx.arc(B.x+(nh.x-B.x)*gf,(B.y-24)+(nh.y-(B.y-24))*gf,1.6,0,7);ctx.fill()}ctx.restore()}else{ctx.save();ctx.strokeStyle='rgba(251,191,36,.65)';ctx.lineWidth=2.5;ctx.setLineDash([8,8]);ctx.beginPath();ctx.moveTo(B.x,B.y-24);ctx.lineTo(nh.x,nh.y);ctx.stroke();ctx.setLineDash([]);ctx.restore()}}
+ /* slingshot aim line while pulling back — release triggers the same doDyno() as Space / Dyno button.
+    Desktop keeps the orange dash; mobile pulls a soft chalk-dust trail in cream + terracotta */
+ if(sling){if(isMobile()){ctx.save();var sd2=Math.hypot(sling.x-B.x,sling.y-B.y),sn=Math.max(2,Math.floor(sd2/11));for(var si2=0;si2<=sn;si2++){var sf=si2/sn,sjx=Math.sin(si2*12.9898)*43758.5453,sjy=Math.cos(si2*78.233)*12543.21;ctx.globalAlpha=.25+.55*sf;ctx.fillStyle=sf>.82?'#e07840':'#fff6e6';ctx.beginPath();ctx.arc(B.x+(sling.x-B.x)*sf+(sjx-Math.floor(sjx)-.5)*3.4,B.y+(sling.y-B.y)*sf+(sjy-Math.floor(sjy)-.5)*3.4,sf>.82?2.4:1.5+1.1*sf,0,7);ctx.fill()}ctx.globalAlpha=.95;ctx.strokeStyle='#e07840';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(sling.x,sling.y,7,0,7);ctx.stroke();ctx.fillStyle='#e07840';ctx.beginPath();ctx.arc(sling.x,sling.y,2.6,0,7);ctx.fill();ctx.restore()}else{ctx.save();ctx.strokeStyle='#e85d1f';ctx.lineWidth=3;ctx.setLineDash([6,6]);ctx.beginPath();ctx.moveTo(B.x,B.y);ctx.lineTo(sling.x,sling.y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#e85d1f';ctx.beginPath();ctx.arc(sling.x,sling.y,6,0,7);ctx.fill();ctx.restore()}}
  for(var oi=0;oi<holds.length;oi++){var o=holds[oi];if(o.y<cam-50||o.y>cam+vh+50)continue;var cm=chalkMarks[o.id]||0;if(cm){ctx.save();ctx.globalAlpha=Math.min(.5,.13*cm);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(o.x,o.y,o.s>=0?24:15,0,7);ctx.fill();ctx.restore()}
   if(o.s<0){ctx.fillStyle='#8a8172';ctx.beginPath();ctx.arc(o.x,o.y,10,0,7);ctx.fill();ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.arc(o.x,o.y,4,0,7);ctx.fill()}
   else{var isNext=o.s===ni;ctx.fillStyle=got[o.s]?'#2dd4bf':(isNext?'#fbbf24':'#0f766e');ctx.beginPath();ctx.arc(o.x,o.y,17+(isNext?3.5*Math.sin(tt*5):0),0,7);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=2;ctx.stroke();if(isNext){ctx.strokeStyle='#fbbf24';ctx.beginPath();ctx.arc(o.x,o.y,27+4*Math.sin(tt*5),0,7);ctx.stroke()}if(got[o.s]){ctx.fillStyle='#fff';ctx.font='800 11px system-ui';ctx.textAlign='center';ctx.fillText('✓',o.x,o.y+4)}}}
@@ -616,6 +661,15 @@ function draw(){
  ctx.fillStyle='#ffd9a0';ctx.beginPath();ctx.arc(B.x+(fall?Math.sin(spin)*4:0),B.y-20,7.5,0,7);ctx.fill();
  ctx.fillStyle='#111';ctx.fillRect(B.x-8,B.y-29,16,5);
  Hd.forEach(function(h){ctx.fillStyle=h.g?'#0f766e':DAY.climber;ctx.beginPath();ctx.arc(h.x,h.y,h.g?7:6,0,7);ctx.fill()});
+ /* MOBILE SLINGSHOT HINT — text only: the small cream "Pull back & let go" tag near the
+    climber. No arrow, no arc, no travelling dot and no animation. Still shows via hintOn():
+    fades after the first dyno / a few moves and returns briefly after a fall. */
+ if(hintOn()&&nh&&!done&&!sling){
+  ctx.save();ctx.font='600 13.5px "Bricolage Grotesque","Public Sans",system-ui,sans-serif';var tagTxt='Pull back & let go',tagW=ctx.measureText(tagTxt).width+30,tagH=27,lx=cl(B.x+16,tagW/2+8,WORLDW-tagW/2-8),ly=B.y+72;
+  ctx.globalAlpha=.96;ctx.shadowColor='rgba(90,50,10,.30)';ctx.shadowBlur=10;ctx.shadowOffsetY=3;ctx.fillStyle='#fff8ec';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(lx-tagW/2,ly-tagH/2,tagW,tagH,13.5);else ctx.rect(lx-tagW/2,ly-tagH/2,tagW,tagH);ctx.fill();ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.strokeStyle='rgba(194,96,42,.45)';ctx.lineWidth=1;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(lx-tagW/2+.5,ly-tagH/2+.5,tagW-1,tagH-1,13);else ctx.rect(lx-tagW/2+.5,ly-tagH/2+.5,tagW-1,tagH-1);ctx.stroke();
+  ctx.fillStyle='#c2602a';ctx.beginPath();ctx.arc(lx-tagW/2+12,ly,2.4,0,7);ctx.fill();
+  ctx.fillStyle='#2b1d12';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tagTxt,lx+5,ly+1);ctx.restore()}
  ctx.restore();
 }
 var last=performance.now();
@@ -707,21 +761,30 @@ if(readerMode)$('readerBanner').hidden=false;
     setTimeout(startPlay,650);
   });
   document.getElementById('showStuffBtn').addEventListener('click',function(){
-    this.hidden=true;
+    /* Never hide the button: once unlocked it must still be there after the
+       drawer is closed, and after falls and respawns. */
+    this.hidden=false;
     if(typeof openDrawer==='function')openDrawer('story');
   });
-  /* Reveal the portfolio only after real play: 2 holds, 2 falls, or 40 seconds in */
+  /* First-camp unlock, latched forever: the moment any camp is unlocked
+     (gotCount() >= 1 — set by gripping a camp hold or climbing past its altitude),
+     the Portfolio button appears. The latch is one-way: this watcher keeps
+     re-asserting it, so the button can never vanish again — not after opening
+     or closing the drawer, not after a fall or respawn, and not at altitude
+     (previously it disappeared by 8,007 m because opening the drawer hid it
+     and nothing ever brought it back). */
+  var portfolioUnlocked=false;
+  function revealPortfolio(){
+    document.body.classList.add('show-stuff');
+    var b=document.getElementById('showStuffBtn');
+    if(b)b.hidden=false;
+  }
   setInterval(function(){
-    if(!document.body.classList.contains('playing'))return;
-    if(document.body.classList.contains('show-stuff'))return;
-    var holds=0,falls=0;
-    try{ holds=gotCount(); }catch(e){}
-    try{ falls=fl; }catch(e){}
-    if(holds>=2||falls>=2||(playStart&&Date.now()-playStart>40000)){
-      document.body.classList.add('show-stuff');
-      document.getElementById('showStuffBtn').hidden=false;
+    if(!portfolioUnlocked){
+      try{ if(gotCount()>=1)portfolioUnlocked=true; }catch(e){}
     }
-  },800);
+    if(portfolioUnlocked)revealPortfolio();
+  },400);
 })();
 </script>
 </body>
